@@ -14,47 +14,31 @@ func (p product) Price() float64 {
 	return float64(p)
 }
 
-
-func magic(products []product) {
-	
-	var wg sync.WaitGroup
-	wg.Add(len(products))
-
-	var total float64
+func magic(products []product, total *float64, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for _, product := range products {
-		total += product.Price()
-		wg.Done()
+		*total += product.Price()
 	}
-	fmt.Println(total)
-
-	wg.Wait()
 }
 
 func main() {
 
 	markets := map[string][]product{
-		"coto": []product{10.3, 56.77, 9.04},
+		"coto": []product{1.3, 6.3, 9.2},
 		"dia": []product{10.3, 5.17, 39.04},
 		"chino": []product{16.73, 6.20},
 	}
 
-	for market, products := range markets {
-		fmt.Println(market)
-		go magic(products)
-	}
+	var total float64
 
-
-
-
-	/*
 	var wg sync.WaitGroup
-	wg.Add() // nro de rutinas
+	wg.Add(len(markets))
 
-	// bla blabla
-	go func() {
-		defer wg.Done()
-		// yad ayada yada
-	}()
-
-	*/
+	for market, products := range markets {
+		total = 0
+		magic(products, &total, &wg)
+		fmt.Println(market, total)
+	}
+	
+	wg.Wait()
 }
