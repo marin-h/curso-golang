@@ -15,11 +15,20 @@ func (p product) Price() float64 {
 }
 
 func calculate(market string, products []product, wg *sync.WaitGroup) {
-	defer wg.Done()
+
+	var mu sync.Mutex
+	
+	defer func(mu *sync.Mutex, wg *sync.WaitGroup) {
+		wg.Done()
+		mu.Lock()
+	}(&mu, wg)
+
 	var total float64
+
 	for _, product := range products {
 		total += product.Price()
 	}
+
 	fmt.Println(market, total)
 }
 
@@ -32,6 +41,7 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
+	
 	wg.Add(len(markets))
 
 	for market, products := range markets {
