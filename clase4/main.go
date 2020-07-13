@@ -14,11 +14,13 @@ func (p product) Price() float64 {
 	return float64(p)
 }
 
-func magic(products []product, total *float64, wg *sync.WaitGroup) {
+func calculate(market string, products []product, wg *sync.WaitGroup) {
 	defer wg.Done()
+	var total float64
 	for _, product := range products {
-		*total += product.Price()
+		total += product.Price()
 	}
+	fmt.Println(market, total)
 }
 
 func main() {
@@ -29,16 +31,12 @@ func main() {
 		"chino": []product{16.73, 6.20},
 	}
 
-	var total float64
-
 	var wg sync.WaitGroup
 	wg.Add(len(markets))
 
 	for market, products := range markets {
-		total = 0
-		magic(products, &total, &wg)
-		fmt.Println(market, total)
+		go calculate(market, products, &wg)
 	}
-	
+
 	wg.Wait()
 }
