@@ -24,16 +24,8 @@ func sumPrice(prod product, total *float64, wg *sync.WaitGroup) {
 }
 
 func calculate(market string, products []product, wg *sync.WaitGroup, result map[string]*float64) {
-
-	var mu sync.Mutex
 	
-	defer func(mu *sync.Mutex, wg *sync.WaitGroup) {
-		mu.Unlock()
-	}(&mu, wg)
-
 	total := result[market]
-
-	mu.Lock()
 	for _, product := range products {
 		go sumPrice(product, total, wg)
 	}
