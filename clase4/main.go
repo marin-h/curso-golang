@@ -14,25 +14,44 @@ func (p product) Price() float64 {
 	return float64(p)
 }
 
-func calculate(market string, products []product, wg *sync.WaitGroup) {
+func sumPrice(prod product, total *float64, wg *sync.WaitGroup) {
+
+	defer func(wg *sync.WaitGroup) {
+		wg.Done()
+	}(wg)
+
+ 	*total += prod.Price()
+}
+
+func calculate(market string, products []product, wg *sync.WaitGroup, result map[string]*float64) {
 
 	var mu sync.Mutex
 	
 	defer func(mu *sync.Mutex, wg *sync.WaitGroup) {
-		wg.Done()
-		mu.Lock()
+		mu.Unlock()
 	}(&mu, wg)
 
-	var total float64
+	total := result[market]
 
+	mu.Lock()
 	for _, product := range products {
-		total += product.Price()
+		go sumPrice(product, total, wg)
 	}
-
-	fmt.Println(market, total)
 }
 
 func main() {
+
+	var wg sync.WaitGroup
+
+	var totalChino float64
+	var totalDia float64
+	var totalCoto float64
+
+	result := map[string]*float64 {
+		"coto": &totalCoto,
+		"dia": &totalDia,
+		"chino": &totalChino,
+	}
 
 	markets := map[string][]product{
 		"coto": []product{1.3, 6.3, 9.2},
@@ -40,13 +59,11 @@ func main() {
 		"chino": []product{16.73, 6.20},
 	}
 
-	var wg sync.WaitGroup
-	
-	wg.Add(len(markets))
-
 	for market, products := range markets {
-		go calculate(market, products, &wg)
+		wg.Add(len(products))
+		go calculate(market, products, &wg, result)
+		wg.Wait()
+		fmt.Println(market, *result[market])
 	}
 
-	wg.Wait()
 }
